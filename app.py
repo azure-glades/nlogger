@@ -90,10 +90,10 @@ async def log_command(interaction: discord.Interaction, message: str, date: str 
             return
         log_date = date
     else:
-        log_date = datetime.now().strftime("%d/%m/%Y")
+        log_date = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
     
     formatted_message = (
-        f"{user_code} {log_number:02d} - {log_date}\n"
+        f"[{user_code}] [{log_number:02d}] {log_date}:\n"
         f"{message}"
     )
     
