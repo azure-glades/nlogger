@@ -58,13 +58,13 @@ def generate_user_code(username: str) -> str:
     username = username.strip()
     
     if len(username) < 2:
-        return f"{username * 2} {username * 2}".upper()
+        return f"{username * 2}{username * 2}".upper()
     elif len(username) == 2:
-        return f"{username} {username}".upper()
+        return f"{username}{username}".upper()
     elif len(username) == 3:
-        return f"{username[:2]} {username[-1] * 2}".upper()
+        return f"{username[:2]}{username[-1] * 2}".upper()
     else:
-        return f"{username[:2]} {username[-2:]}".upper()
+        return f"{username[:2]}{username[-2:]}".upper()
 
 @bot.tree.command(name="log", description="Log a message in formatted style")
 @app_commands.describe(
