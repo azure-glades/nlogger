@@ -1,5 +1,6 @@
 import discord
 from discord import app_commands
+from discord.ext import commands
 from datetime import datetime, timedelta, timezone
 import re
 import json
@@ -107,6 +108,8 @@ async def log_command(interaction: discord.Interaction, message: str, date: str 
 
 
 @bot.tree.command(name="reset_log", description="Reset your log counter")
+@commands.is_owner()
+@commands.has_permissions(administrator=True)
 @app_commands.describe(
     user="Optional: User to reset (admin only)",
     new_number="Optional: Set to specific number (default: 0)"
@@ -132,16 +135,11 @@ async def reset_log_command(interaction: discord.Interaction, user: discord.User
         await interaction.response.send_message(f"Reset your log number to {new_number:02d}", ephemeral=True)
 
 @bot.tree.command(name="log_debug", description="Debug log numbers (Admin only)")
+@commands.is_owner()
+@commands.has_permissions(administrator=True)
 async def log_debug_command(interaction: discord.Interaction):
     """View and manage log numbers"""
-    '''
-    is_owner = interaction.user.id == interaction.guild.owner_id
-    is_admin = interaction.user.guild_permissions.administrator
-    
-    if not (is_owner or is_admin):
-        await interaction.response.send_message("Administrator permission required.", ephemeral=True)
-        return
-    '''
+
     # Show current IST time for debugging
     ist_time = get_ist_time()
     current_ist = ist_time.strftime("%d/%m/%Y %H:%M:%S")
