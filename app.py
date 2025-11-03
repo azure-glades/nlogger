@@ -134,14 +134,14 @@ async def reset_log_command(interaction: discord.Interaction, user: discord.User
 @bot.tree.command(name="log_debug", description="Debug log numbers (Admin only)")
 async def log_debug_command(interaction: discord.Interaction):
     """View and manage log numbers"""
-    
+    '''
     is_owner = interaction.user.id == interaction.guild.owner_id
     is_admin = interaction.user.guild_permissions.administrator
     
     if not (is_owner or is_admin):
         await interaction.response.send_message("Administrator permission required.", ephemeral=True)
         return
-    
+    '''
     # Show current IST time for debugging
     ist_time = get_ist_time()
     current_ist = ist_time.strftime("%d/%m/%Y %H:%M:%S")
