@@ -1,11 +1,12 @@
 import discord
 from discord import app_commands
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 import re
 import json
 import os
 
 LOG_NUMBERS_FILE = "/tmp/log_numbers.json"  # Railway uses ephemeral storage
+IST = timezone(timedelta(hours=5, minutes=30))
 
 class LogBot(discord.Client):
     def __init__(self):
@@ -51,6 +52,10 @@ class LogBot(discord.Client):
             self.synced = True
             print("Slash commands synced globally")
 
+def get_ist_time():
+    """Get current time in IST timezone"""
+    return datetime.now(IST)
+
 bot = LogBot()
 
 def generate_user_code(username: str) -> str:
@@ -90,7 +95,8 @@ async def log_command(interaction: discord.Interaction, message: str, date: str 
             return
         log_date = date
     else:
-        log_date = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+        ist_time = get_ist_time()
+        log_date = ist_time.strftime("%d/%m/%Y %H:%M:%S")
     
     formatted_message = (
         f"[{user_code}] [{log_number:02d}] {log_date}:\n"
@@ -98,6 +104,61 @@ async def log_command(interaction: discord.Interaction, message: str, date: str 
     )
     
     await interaction.response.send_message(formatted_message)
+
+
+@bot.tree.command(name="reset_log", description="Reset your log counter")
+@app_commands.describe(
+    user="Optional: User to reset (admin only)",
+    new_number="Optional: Set to specific number (default: 0)"
+)
+async def reset_log_command(interaction: discord.Interaction, user: discord.User = None, new_number: int = 0):
+    """Reset log numbers for yourself or others (admin only)"""
+    
+    is_admin = interaction.user.guild_permissions.administrator
+    
+    if user and not is_admin:
+        await interaction.response.send_message("❌ Only administrators can reset other users' logs.", ephemeral=True)
+        return
+    
+    target_user = user or interaction.user
+    user_id = str(target_user.id)
+    
+    bot.log_numbers[user_id] = new_number
+    bot.save_log_numbers()
+    
+    if user:
+        await interaction.response.send_message(f"✅ Reset {target_user.display_name}'s log number to {new_number:02d}")
+    else:
+        await interaction.response.send_message(f"✅ Reset your log number to {new_number:02d}", ephemeral=True)
+
+@bot.tree.command(name="log_debug", description="Debug log numbers (Admin only)")
+async def log_debug_command(interaction: discord.Interaction):
+    """View and manage log numbers"""
+    
+    if not interaction.user.guild_permissions.administrator:
+        await interaction.response.send_message("❌ Administrator permission required.", ephemeral=True)
+        return
+    
+    # Show current IST time for debugging
+    ist_time = get_ist_time()
+    current_ist = ist_time.strftime("%d/%m/%Y %H:%M:%S")
+    
+    if not bot.log_numbers:
+        debug_info = "No log numbers recorded yet."
+    else:
+        debug_info = "Current Log Numbers:\n"
+        for user_id, number in bot.log_numbers.items():
+            try:
+                user = await bot.fetch_user(int(user_id))
+                username = user.name
+            except:
+                username = f"Unknown ({user_id})"
+            debug_info += f"- {username}: {number:02d}\n"
+    
+    debug_info += f"\nTotal users: {len(bot.log_numbers)}"
+    debug_info += f"\nCurrent IST: {current_ist}"
+    
+    await interaction.response.send_message(f"```{debug_info}```", ephemeral=True)
 
 if __name__ == "__main__":
     token = os.environ.get('DISCORD_TOKEN')
