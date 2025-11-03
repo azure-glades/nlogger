@@ -117,7 +117,7 @@ async def reset_log_command(interaction: discord.Interaction, user: discord.User
     is_admin = interaction.user.guild_permissions.administrator
     
     if user and not is_admin:
-        await interaction.response.send_message("❌ Only administrators can reset other users' logs.", ephemeral=True)
+        await interaction.response.send_message("Only administrators can reset other users' logs.", ephemeral=True)
         return
     
     target_user = user or interaction.user
@@ -127,16 +127,19 @@ async def reset_log_command(interaction: discord.Interaction, user: discord.User
     bot.save_log_numbers()
     
     if user:
-        await interaction.response.send_message(f"✅ Reset {target_user.display_name}'s log number to {new_number:02d}")
+        await interaction.response.send_message(f"Reset {target_user.display_name}'s log number to {new_number:02d}")
     else:
-        await interaction.response.send_message(f"✅ Reset your log number to {new_number:02d}", ephemeral=True)
+        await interaction.response.send_message(f"Reset your log number to {new_number:02d}", ephemeral=True)
 
 @bot.tree.command(name="log_debug", description="Debug log numbers (Admin only)")
 async def log_debug_command(interaction: discord.Interaction):
     """View and manage log numbers"""
     
-    if not interaction.user.guild_permissions.administrator:
-        await interaction.response.send_message("❌ Administrator permission required.", ephemeral=True)
+    is_owner = interaction.user.id == interaction.guild.owner_id
+    is_admin = interaction.user.guild_permissions.administrator
+    
+    if not (is_owner or is_admin):
+        await interaction.response.send_message("Administrator permission required.", ephemeral=True)
         return
     
     # Show current IST time for debugging
